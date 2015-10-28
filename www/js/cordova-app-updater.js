@@ -4,7 +4,7 @@ window.CordovaAppUpdater =
 
   //TODO: prevent corrupt/endless update
   //TODO: reduce dependencies
-  //TODO: hide splash screen only after updated version is loaded
+
   //TODO: BUG: possible bug - removal of files more than once? (trivial)
 
   var Promise = window.Promise;
@@ -114,6 +114,12 @@ window.CordovaAppUpdater =
         //console.log('dataDirectory URI: ' + JSON.stringify(dataDirectoryEntry));
       })
     ]);
+  }
+
+  function hideSplashScreen() {
+    if (typeof navigator.splashscreen != 'undefined') {
+      navigator.splashscreen.hide();
+    }
   }
 
   function copyBundleFilesToDateDirectory() {
@@ -293,10 +299,12 @@ window.CordovaAppUpdater =
         var jumpUrl = joinPath(joinPath(cordova.file.dataDirectory, 'www'), config.indexHtmlName);
         if (location.href != jumpUrl) {
           location.href = jumpUrl;
-          //location.reload();
         } else {
           console.warn("You are running a cached version of the app. (By CordovaAppUpdater)\nWhen in dev environment, comment CordovaAppUpdater.switchToUpdatedVersion(); to see modifications.");
+          hideSplashScreen();
         }
+      } else {
+        hideSplashScreen();
       }
     }
   };
