@@ -44,5 +44,7 @@ function checkForUpdate() {
                 alert('No Update Available');
             }
         });
+    },function(data){
+        console.error(data);
     });
 }

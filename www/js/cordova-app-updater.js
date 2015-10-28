@@ -2,10 +2,11 @@ window.CordovaAppUpdater =
 (function () {
   // You are welcome to contribute to this project!
 
-  //TODO: prevent corrupt/endless update
+  //TODO: prevent corrupt/endless update, rollback mechanism ** important
   //TODO: reduce dependencies
 
   //TODO: BUG: possible bug - removal of files more than once? (trivial)
+  //TODO: android traversal optimization
 
   var Promise = window.Promise;
   var changedFiles = [];
@@ -144,7 +145,6 @@ window.CordovaAppUpdater =
       });
       return deferred.promise;
     })().then(function () {
-      dataDirectoryEntry.getDirectory('www', {create: true}, function (wwwDir) {
         //copy www in the bundle (applicationDirectory) to dataDirectory
         applicationDirectoryEntry.copyTo(dataDirectoryEntry, 'www', function (entry) {
           dataWWWDirectoryEntry = entry;
@@ -155,7 +155,6 @@ window.CordovaAppUpdater =
       }, function (err) {
         deferred.reject(err);
       });
-    });
     return deferred.promise;
   }
 
