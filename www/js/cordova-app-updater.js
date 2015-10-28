@@ -256,7 +256,7 @@ window.CordovaAppUpdater =
                 changedFiles.push(remote.Manifest[key]);
               }
             }
-            deferred.resolve({changedFiles: changedFiles, totalSize: totalSize});
+            deferred.resolve({changedFiles: changedFiles, totalSize: totalSize, lastUpdateTime: new Date(remote.ManifestDigest.time)});
           });
         } else {
           deferred.resolve(false);

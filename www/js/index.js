@@ -29,13 +29,13 @@ function checkForUpdate() {
         CordovaAppUpdater.check().then(function (data) {
             //Result of availability of an update
             //data==false, (when there's no update) or
-            //data=={changedFiles: changedFiles, totalSize: totalSize}
+            //data=={changedFiles Array, totalSize: int (Bytes), lastUpdateTime (Date)}
             if (data !== false) {
                 console.log(data);
                 CordovaAppUpdater.onProgress = function (totalDownloaded, totalSize) {
                     console.log('Progress', totalDownloaded, totalSize);
                 };
-                if (confirm('New update available, ' + (data.totalSize / 1024).toFixed(2) + ' kBs of download, update now?')) {
+                if (confirm('New update available, ' + (data.totalSize / 1024).toFixed(2) + ' kBs of download, update now?\n\nLast Updated: '+ data.lastUpdateTime)) {
                     CordovaAppUpdater.download().then(function () {
                         CordovaAppUpdater.apply();
                     })
