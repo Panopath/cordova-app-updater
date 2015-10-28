@@ -1,12 +1,22 @@
-window.CordovaAppUpdater =
-(function () {
-  // You are welcome to contribute to this project!
+/**
+ *  Cordova App Uploader (version 0.1)
+ *
+ *    https://github.com/KevinWang15/cordova-app-updater
+ *
+ *    created by KevinWang on October 29 2015
+ *
+ *    Cordova App Uploader is an easy-to-use, efficient,
+ *    powerful tool to remote update your cordova app.
+ *
+ *    You are welcome to contribute to this project!
+ *
+ */
+
+var CordovaAppUpdater =
+(function (config) {
 
   //TODO: prevent corrupt/endless update, rollback mechanism ** important
   //TODO: reduce dependencies
-
-  //TODO: BUG: possible bug - removal of files more than once? (trivial)
-  //TODO: android traversal optimization
 
   var Promise = window.Promise;
   var changedFiles = [];
@@ -15,11 +25,7 @@ window.CordovaAppUpdater =
   var updateAvailable = null, updateDownloaded = false;
   //TODO: keep either dataDirectoryEntry or dataWWWDirectoryEntry
   var applicationDirectoryEntry, dataDirectoryEntry, dataWWWDirectoryEntry;
-  var config =
-  {
-    server_url: 'http://114.215.159.185/update/',
-    indexHtmlName: 'index.html'
-  };
+
   var local = {
     Manifest: {},
     ManifestDigest: {}
@@ -334,4 +340,4 @@ window.CordovaAppUpdater =
   };
 
   return exports;
-})();
+});

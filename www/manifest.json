@@ -16,13 +16,13 @@
   },
   "js-cordova-app-updater.js": {
     "filename": "js/cordova-app-updater.js",
-    "filesize": 10524,
-    "version": "89b8481b4ce10177085fb2eaafea44a9bd4e6a4ccc08cd3d75c6b7e4dfb9cec4"
+    "filesize": 11446,
+    "version": "82704c2c790956a9e6689c53fc044887231413b571f6832dd7cdc23345309c78"
   },
   "js-index.js": {
     "filename": "js/index.js",
-    "filesize": 2042,
-    "version": "96767844956070c805174b3c0d962eb9b62681f77ac1530a22c77f75fb67c3bb"
+    "filesize": 2612,
+    "version": "406ec7b24bfb3d400fb3e789194f4aa318e5351d69078a5537632f9a53b23007"
   },
   "lib-CordovaPromiseFS.js": {
     "filename": "lib/CordovaPromiseFS.js",

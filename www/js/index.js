@@ -1,5 +1,11 @@
 // IMPORTANT! Only call CordovaAppUpdater after 'deviceready'
 var DeviceReadyDefer = Promise.defer();
+
+window.CordovaAppUpdater = new CordovaAppUpdater({
+    server_url: 'http://114.215.159.185/update/',
+    indexHtmlName: 'index.html'
+});
+
 var CordovaAppUpdaterInit;
 
 document.addEventListener('deviceready', function () {
