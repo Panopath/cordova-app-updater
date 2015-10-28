@@ -1,51 +1,48 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-var app = {
-    // Application Constructor
-    initialize: function() {
-        this.bindEvents();
-    },
-    // Bind Event Listeners
-    //
-    // Bind any events that are required on startup. Common events are:
-    // 'load', 'deviceready', 'offline', and 'online'.
-    bindEvents: function() {
-        document.addEventListener('deviceready', this.onDeviceReady, false);
-    },
-    // deviceready Event Handler
-    //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicitly call 'app.receivedEvent(...);'
-    onDeviceReady: function() {
-        app.receivedEvent('deviceready');
-    },
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
+// IMPORTANT! Only call CordovaAppUpdater after 'deviceready'
+var DeviceReadyDefer = Promise.defer();
+var CordovaAppUpdaterInit;
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+document.addEventListener('deviceready', function () {
+    console.log('Device ready');
 
-        console.log('Received Event: ' + id);
+    var DEV_ENVIRONMENT = false;
+
+    // Don't call CordovaAppUpdater.switchToUpdatedVersion in dev environment,
+    // for it will create a cached version of your app,
+    // preventing you to see the modifications you make to the app.
+    // (unless you manually remove localStorage['manifest'] and localStorage['manifest.digest'])
+
+    if (typeof cordova != 'undefined' && !DEV_ENVIRONMENT) {
+        CordovaAppUpdater.switchToUpdatedVersion();
     }
-};
 
-app.initialize();
+    DeviceReadyDefer.resolve();
+
+    //CordovaAppUpdater.init() may take several seconds on the first run as it copies the files in your app bundle to another directory whick is read/write
+    //Returns a promise
+    CordovaAppUpdaterInit = CordovaAppUpdater.init();
+});
+
+function checkForUpdate() {
+    // Only after device is ready and cordova app updater has initiated, do you call CordovaAppUpdater.check()
+    Promise.all([DeviceReadyDefer.promise, CordovaAppUpdaterInit]).then(function () {
+        CordovaAppUpdater.check().then(function (data) {
+            //Result of availability of an update
+            //data==false, (when there's no update) or
+            //data=={changedFiles: changedFiles, totalSize: totalSize}
+            if (data !== false) {
+                console.log(data);
+                CordovaAppUpdater.onProgress = function (totalDownloaded, totalSize) {
+                    console.log('Progress', totalDownloaded, totalSize);
+                };
+                if (confirm('New update available, ' + (data.totalSize / 1024).toFixed(2) + ' kBs of download, update now?')) {
+                    CordovaAppUpdater.download().then(function () {
+                        CordovaAppUpdater.apply();
+                    })
+                }
+            } else {
+                alert('No Update Available');
+            }
+        });
+    });
+}

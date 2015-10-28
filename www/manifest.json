@@ -1,0 +1,42 @@
+{
+  "css-index.css": {
+    "filename": "css/index.css",
+    "filesize": 2549,
+    "version": "df46b13cf3a7f0cbb894393ab24fd416d1d60db9ed4e187c081fbf63c19ceef9"
+  },
+  "img-logo.png": {
+    "filename": "img/logo.png",
+    "filesize": 21814,
+    "version": "62ce9df99cb73bc7824cecbba38a3ada376dd6f530890a4501c1ed30fba6dacb"
+  },
+  "index.html": {
+    "filename": "index.html",
+    "filesize": 1264,
+    "version": "2c560e96d79b4220bbfcbb4b9015e882ac32bd929f7df3af5219069cb726ac95"
+  },
+  "js-cordova-app-updater.js": {
+    "filename": "js/cordova-app-updater.js",
+    "filesize": 10524,
+    "version": "89b8481b4ce10177085fb2eaafea44a9bd4e6a4ccc08cd3d75c6b7e4dfb9cec4"
+  },
+  "js-index.js": {
+    "filename": "js/index.js",
+    "filesize": 2042,
+    "version": "96767844956070c805174b3c0d962eb9b62681f77ac1530a22c77f75fb67c3bb"
+  },
+  "lib-CordovaPromiseFS.js": {
+    "filename": "lib/CordovaPromiseFS.js",
+    "filesize": 17206,
+    "version": "10a9e9a18a41961441b3b8be45620130240a3806c2a337ef057a4c73b250cd8d"
+  },
+  "lib-bluebird.js": {
+    "filename": "lib/bluebird.js",
+    "filesize": 185106,
+    "version": "d24c2d1ef19e2f06cffec3e2ae10c856a5d32c424125571ddbfee9ede74eb36b"
+  },
+  "lib-jquery.min.js": {
+    "filename": "lib/jquery.min.js",
+    "filesize": 84249,
+    "version": "b2ce8462d173fc92b60f98701f45443710e423af1b11525a762008ff2c1a0204"
+  }
+}

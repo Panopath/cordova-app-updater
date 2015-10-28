@@ -5,3 +5,4 @@ plugins/**/
 node_modules
 npm-debug.log
 .idea/
+bower_components/
