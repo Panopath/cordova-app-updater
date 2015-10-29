@@ -13,6 +13,12 @@ document.addEventListener('deviceready', function () {
     // (unless you manually remove localStorage['manifest'] and localStorage['manifest.digest'])
 
     if (typeof cordova != 'undefined' && !DEV_ENVIRONMENT) {
+
+        //CordovaAppUpdater.updateSuccessful has to be set before calling CordovaAppUpdater.switchToUpdatedVersion();
+        CordovaAppUpdater.updateSuccessful=function(){
+            alert('Congratulations! you\'ve successfully updated the app!');
+        };
+
         CordovaAppUpdater.switchToUpdatedVersion();
     }
 
@@ -34,9 +40,6 @@ function checkForUpdate() {
                 console.log(data);
                 CordovaAppUpdater.onProgress = function (totalDownloaded, totalSize) {
                     console.log('Progress', totalDownloaded, totalSize);
-                };
-                CordovaAppUpdaterInit.updateSuccessful=function(){
-                    alert('Congratulations! you\'ve successfully updated the app!');
                 };
                 if (confirm('New update available, ' + (data.totalSize / 1024).toFixed(2) + ' kBs of download, update now?\n\nLast Updated: '+ data.lastUpdateTime)) {
                     CordovaAppUpdater.download().then(function () {
