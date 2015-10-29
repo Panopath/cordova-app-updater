@@ -62,6 +62,8 @@ cordova-app-updater
 	```
 	to `config.xml`
 
+4. Put a `.htaccess` in your www folder and configure Apache, so that `Access-Control-Allow-Origin "*"` will be set.
+
 ## Dependency
 
 1. [cordova-plugin-file](https://github.com/apache/cordova-plugin-file)
