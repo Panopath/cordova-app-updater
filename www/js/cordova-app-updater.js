@@ -15,7 +15,8 @@
 var CordovaAppUpdater =
 (function (config) {
 
-  //TODO: prevent corrupt/endless update, rollback mechanism ** important
+  //TODO: prevent corrupt update, rollback mechanism ** important
+  //TODO: if download is interrupted, should rollback to previous version ** important
   //TODO: reduce dependencies
 
   var Promise = window.Promise;
@@ -23,7 +24,6 @@ var CordovaAppUpdater =
   var totalSize = 0;
   var totalDownloaded = 0;
   var updateAvailable = null, updateDownloaded = false;
-  //TODO: keep either dataDirectoryEntry or dataWWWDirectoryEntry
   var applicationDirectoryEntry, dataDirectoryEntry, dataWWWDirectoryEntry;
 
   var local = {
@@ -33,7 +33,7 @@ var CordovaAppUpdater =
     Manifest: {},
     ManifestDigest: {}
   };
-  var fs, fileTransfer;
+  var fs;
 
   if (config.server_url.substring(config.server_url.length - 1) != '/')
     config.server_url += '/';
@@ -68,7 +68,7 @@ var CordovaAppUpdater =
       fileEntry.remove(function () {
         deferred.resolve();
       }, function (err) {
-        console.log(err);
+        console.log('CordovaAppLoader:', err);
         deferred.resolve();
         //deferred.reject(err);
       });
@@ -81,20 +81,27 @@ var CordovaAppUpdater =
   function downloadToDataWWWDirectory(file) {
     var deferred = Promise.defer();
     deleteFileIfExists(dataWWWDirectoryEntry, file.filename).then(function () {
-      console.log("downloading", file.filename);
-      fileTransfer.download(joinPath(config.server_url, file.filename), joinPath(dataWWWDirectoryEntry.nativeURL, file.filename), function (data) {
-        totalDownloaded += file.filesize;
+      console.log('CordovaAppLoader:', "downloading", file.filename);
 
+      var fileTransfer = new FileTransfer();
+      var last_loaded = 0;
+
+      fileTransfer.onprogress = function (ProgressEvent) {
+        if (ProgressEvent.loaded <= last_loaded)
+          return;
+        var increment = (ProgressEvent.loaded - last_loaded) / ProgressEvent.total * file.filesize;
+        last_loaded = ProgressEvent.loaded;
+        totalDownloaded += increment;
         if (typeof exports.onProgress == "function") {
           exports.onProgress(totalDownloaded, totalSize);
         }
-
-        console.log(totalDownloaded, totalSize);
+      }
+      fileTransfer.download(joinPath(config.server_url, file.filename), joinPath(dataWWWDirectoryEntry.nativeURL, file.filename), function (data) {
         deferred.resolve(data);
       }, function (err) {
-        console.log(err);
+        console.log('CordovaAppLoader:', err);
         deferred.reject(err);
-      });
+      }, true);
     });
     return deferred.promise;
   }
@@ -114,22 +121,22 @@ var CordovaAppUpdater =
     return Promise.all([
       resolveLocalFSURL(joinPath(cordova.file.applicationDirectory, 'www', true)).then(function (data) {
         applicationDirectoryEntry = data;
-        //console.log('applicationDirectory URI: ' + JSON.stringify(applicationDirectoryEntry));
       }),
       resolveLocalFSURL(cordova.file.dataDirectory).then(function (data) {
         dataDirectoryEntry = data;
-        //console.log('dataDirectory URI: ' + JSON.stringify(dataDirectoryEntry));
       })
     ]);
   }
 
   function hideSplashScreen() {
+    console.log('CordovaAppLoader:', 'hiding splash screen')
     if (typeof navigator.splashscreen != 'undefined') {
       navigator.splashscreen.hide();
     }
   }
 
   function showSplashScreen() {
+    console.log('CordovaAppLoader:', 'showing splash screen')
     if (typeof navigator.splashscreen != 'undefined') {
       navigator.splashscreen.show();
     }
@@ -137,17 +144,14 @@ var CordovaAppUpdater =
 
   function copyBundleFilesToDateDirectory() {
     var deferred = Promise.defer();
-    console.log('First run, copying bundled files');
-    //console.log(applicationDirectoryEntry);
-    //console.log(dataDirectoryEntry);
-
+    console.log('CordovaAppLoader:', 'First run, copying bundled files');
     //delete www in dataDirectory if it exists
     (function () {
       var deferred = Promise.defer();
       dataDirectoryEntry.getDirectory('www', {create: false}, function (dir) {
-        console.log('Previous www/ found, removing..');
+        console.log('CordovaAppLoader:', 'Previous www/ found, removing..');
         dir.removeRecursively(function () {
-          console.log('Done removing previous www/');
+          console.log('CordovaAppLoader:', 'Done removing previous www/');
           deferred.resolve();
         }, function (err) {
           deferred.reject(err);
@@ -159,6 +163,7 @@ var CordovaAppUpdater =
     })().then(function () {
         //copy www in the bundle (applicationDirectory) to dataDirectory
         applicationDirectoryEntry.copyTo(dataDirectoryEntry, 'www', function (entry) {
+          console.log('CordovaAppLoader:', 'Copying finished');
           dataWWWDirectoryEntry = entry;
           deferred.resolve();
         }, function (err) {
@@ -184,7 +189,10 @@ var CordovaAppUpdater =
 
   var exports = {
     init: function () {
+
       var firstRun;
+      var time = +new Date();
+
       fs = CordovaPromiseFS({
         persistent: true,
         storageSize: 20 * 1024 * 1024,
@@ -192,9 +200,9 @@ var CordovaAppUpdater =
         Promise: Promise
       });
 
-      fileTransfer = new FileTransfer();
-
-      if (!localStorage['manifest']) {
+      if (!localStorage['manifest'] || !localStorage['manifest.digest']) {
+        delete localStorage['manifest'];
+        delete localStorage['manifest.digest'];
         firstRun = true;
       }
 
@@ -204,7 +212,6 @@ var CordovaAppUpdater =
           if (!localStorage['manifest']) {
             return loadResource("manifest.json").then(function (data) {
               local.Manifest = data;
-              localStorage['manifest'] = JSON.stringify(data);
             });
           } else {
             local.Manifest = JSON.parse(localStorage['manifest']);
@@ -217,7 +224,6 @@ var CordovaAppUpdater =
           if (!localStorage['manifest.digest']) {
             return loadResource("manifest.digest.json").then(function (data) {
               local.ManifestDigest = data;
-              localStorage['manifest.digest'] = JSON.stringify(data);
             });
           } else {
             local.ManifestDigest = JSON.parse(localStorage['manifest.digest']);
@@ -232,6 +238,10 @@ var CordovaAppUpdater =
           getDirectoryEntries().then(function () {
             if (firstRun)
               copyBundleFilesToDateDirectory().then(function () {
+
+                localStorage['manifest'] = JSON.stringify(local.Manifest);
+                localStorage['manifest.digest'] = JSON.stringify(local.ManifestDigest);
+
                 deferred.resolve();
               }, function () {
                 deferred.reject();
@@ -246,12 +256,13 @@ var CordovaAppUpdater =
           });
           return deferred.promise;
         })()
-      ]);
+      ]).then(function () {
+        console.log('CordovaAppLoader:', 'Init took ', +new Date() - time, 'ms');
+      });
     },
+
     check: function () {
-      //console.log(applicationDirectoryEntry, dataDirectoryEntry, dataWWWDirectoryEntry);
       var deferred = Promise.defer();
-      //Load digest of manifest first to check whether an update is available
       loadResource(joinPath(config.server_url, "manifest.digest.json")).then(function (data) {
         remote.ManifestDigest = data;
       }).then(function () {
@@ -268,9 +279,15 @@ var CordovaAppUpdater =
                 changedFiles.push(remote.Manifest[key]);
               }
             }
+            console.log('CordovaAppLoader:', 'New update available', {
+              changedFiles: changedFiles,
+              totalSize: totalSize,
+              lastUpdateTime: new Date(remote.ManifestDigest.time)
+            });
             deferred.resolve({changedFiles: changedFiles, totalSize: totalSize, lastUpdateTime: new Date(remote.ManifestDigest.time)});
           });
         } else {
+          console.log('CordovaAppLoader:', 'checked, no update available');
           deferred.resolve(false);
           updateAvailable = false;
         }
@@ -287,6 +304,7 @@ var CordovaAppUpdater =
       return Promise.all(changedFiles.map(function (file) {
         return downloadToDataWWWDirectory(file);
       })).then(function () {
+        console.log('CordovaAppLoader:', 'Update downloaded');
         updateDownloaded = true;
       });
     },
@@ -298,19 +316,29 @@ var CordovaAppUpdater =
       localStorage['manifest'] = JSON.stringify(remote.Manifest);
       localStorage['manifest.digest'] = JSON.stringify(remote.ManifestDigest);
       if (applyOnNextLaunch) {
-        console.log('Will apply changes on next launch.');
+        console.log('CordovaAppLoader:', 'Will apply changes on next launch.');
       } else {
         //Save update stage to localStorage.
         localStorage['updateStage'] = 1 ;
         showSplashScreen();
-        location.href = joinPath(dataWWWDirectoryEntry.nativeURL, config.indexHtmlName);
+
+        var jumpUrl = joinPath(dataWWWDirectoryEntry.nativeURL, config.indexHtmlName);
+        var locationHref = location.href;
+        locationHref = locationHref.substring(0, locationHref.lastIndexOf("#"))
+        console.log('CordovaAppLoader:', 'jumpUrl=', jumpUrl, 'location.href=', locationHref);
+        if (locationHref == jumpUrl) {
+          location.reload();
+        } else {
+          location.href = jumpUrl;
+        }
       }
     },
 
     switchToUpdatedVersion: function () {
-
+      console.log('CordovaAppLoader:', 'switchToUpdatedVersion called');
       //Handle update progress
       if(localStorage['updateStage'] == 1){
+        console.log('CordovaAppLoader:', 'updateStage==1, reloading page');
         localStorage['updateStage'] = 2;
         //Reload the page to force css reload
         location.reload();
@@ -318,6 +346,7 @@ var CordovaAppUpdater =
       }
 
       if(localStorage['updateStage'] == 2){
+        console.log('CordovaAppLoader:', 'updateStage==2, update successful');
         delete localStorage['updateStage'];
         if (typeof exports.updateSuccessful == "function") {
           exports.updateSuccessful();
@@ -327,10 +356,16 @@ var CordovaAppUpdater =
       //If Already updated/ has a copied version, jump to the copied version in dataWWWDirectory
       if (!!localStorage['manifest']) {
         var jumpUrl = joinPath(joinPath(cordova.file.dataDirectory, 'www'), config.indexHtmlName);
-        if (location.href != jumpUrl) {
+        var locationHref = location.href;
+        locationHref = locationHref.substring(0, locationHref.lastIndexOf("#"))
+        console.log('CordovaAppLoader:', 'jumpUrl=', jumpUrl, 'location.href=', locationHref);
+
+        if (locationHref != jumpUrl) {
           location.href = jumpUrl;
         } else {
-          console.warn("You are running a cached version of the app. (By CordovaAppUpdater)\nWhen in dev environment, comment CordovaAppUpdater.switchToUpdatedVersion(); to see modifications.");
+          setTimeout(function () {
+            console.warn("You are running a cached version of the app. (By CordovaAppUpdater)\nWhen in dev environment, comment CordovaAppUpdater.switchToUpdatedVersion(); to see modifications.");
+          }, 5000);
           hideSplashScreen();
         }
       } else {
