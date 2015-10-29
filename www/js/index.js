@@ -35,6 +35,9 @@ function checkForUpdate() {
                 CordovaAppUpdater.onProgress = function (totalDownloaded, totalSize) {
                     console.log('Progress', totalDownloaded, totalSize);
                 };
+                CordovaAppUpdaterInit.updateSuccessful=function(){
+                    alert('Congratulations! you\'ve successfully updated the app!');
+                };
                 if (confirm('New update available, ' + (data.totalSize / 1024).toFixed(2) + ' kBs of download, update now?\n\nLast Updated: '+ data.lastUpdateTime)) {
                     CordovaAppUpdater.download().then(function () {
                         CordovaAppUpdater.apply();

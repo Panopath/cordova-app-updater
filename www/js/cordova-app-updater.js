@@ -123,6 +123,12 @@ window.CordovaAppUpdater =
     }
   }
 
+  function showSplashScreen() {
+    if (typeof navigator.splashscreen != 'undefined') {
+      navigator.splashscreen.show();
+    }
+  }
+
   function copyBundleFilesToDateDirectory() {
     var deferred = Promise.defer();
     console.log('First run, copying bundled files');
@@ -288,11 +294,30 @@ window.CordovaAppUpdater =
       if (applyOnNextLaunch) {
         console.log('Will apply changes on next launch.');
       } else {
+        //Save update stage to localStorage.
+        localStorage['updateStage'] = 1 ;
+        showSplashScreen();
         location.href = joinPath(dataWWWDirectoryEntry.nativeURL, config.indexHtmlName);
       }
     },
 
     switchToUpdatedVersion: function () {
+
+      //Handle update progress
+      if(localStorage['updateStage'] == 1){
+        localStorage['updateStage'] = 2;
+        //Reload the page to force css reload
+        location.reload();
+        return;
+      }
+
+      if(localStorage['updateStage'] == 2){
+        delete localStorage['updateStage'];
+        if (typeof exports.updateSuccessful == "function") {
+          exports.updateSuccessful();
+        }
+      }
+
       //If Already updated/ has a copied version, jump to the copied version in dataWWWDirectory
       if (!!localStorage['manifest']) {
         var jumpUrl = joinPath(joinPath(cordova.file.dataDirectory, 'www'), config.indexHtmlName);
