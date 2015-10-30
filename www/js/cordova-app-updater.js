@@ -174,8 +174,10 @@ var CordovaAppUpdater =
     var currentDir = 'www';
     var tasks = [];
     for (var i in folders) {
+      if (!folders.hasOwnProperty(i)) continue;
       var folder = folders[i];
       currentDir = joinPath(currentDir, folder);
+      console.log('joinPath', currentDir, folder);
       tasks.push((function (dir) {
         return function () {
           var deferred = Promise.defer();
@@ -379,20 +381,27 @@ var CordovaAppUpdater =
       if (!updateDownloaded)
         throw('Call CordovaAppUpdater.download() first');
 
+      var tasks = [];
+
       getDirectoryEntry(joinPath(fs.root.nativeURL, tempDirectoryName)).then(
       function (TempDirectory) {
         getDirectoryEntry(joinPath(fs.root.nativeURL, 'www')).then(
         function (wwwDirectory) {
           //Merges two temp directory and www directory.
           for (var fileIndex in changedFiles) {
+            if (!changedFiles.hasOwnProperty(fileIndex)) continue;
             var file = changedFiles[fileIndex];
             (function (fileName) {
+              if (!fileName) return;
+              var deferred = Promise.defer();
+              tasks.push(deferred.promise);
               TempDirectory.getFile(fileName, {create: false}, function (fileEntry) {
                 deleteFileIfExists(wwwDirectory, fileName).then(function () {
                   ensureDirectoryInDataWWW(fileName.substring(0, fileName.lastIndexOf('/'))).then(function () {
                     fileEntry.moveTo(wwwDirectory, fileName, function () {
+                      deferred.resolve();
                     }, function (err) {
-                      throw err;
+                      deferred.reject(err);
                     });
                   });
                 });
@@ -400,9 +409,28 @@ var CordovaAppUpdater =
                 throw err;
               })
             })(file.filename);
-
           }
-          window.TempDirectory = TempDirectory;
+
+          console.log('tasks:', tasks);
+          Promise.all(tasks).then(function () {
+
+            localStorage['manifest'] = JSON.stringify(remote.Manifest);
+            localStorage['manifest.digest'] = JSON.stringify(remote.ManifestDigest);
+
+            localStorage['updateStage'] = 1;
+
+            showSplashScreen();
+
+            var jumpUrl = joinPath(fs.root.nativeURL, 'www', config.indexHtmlName);
+            var locationHref = location.href;
+            locationHref = locationHref.substring(0, locationHref.lastIndexOf("#"));
+            console.log('CordovaAppLoader:', 'jumpUrl=', jumpUrl, 'location.href=', locationHref);
+            if (locationHref == jumpUrl) {
+              location.reload();
+            } else {
+              location.href = jumpUrl;
+            }
+          });
         },
         function (err) {
           throw err;
@@ -411,23 +439,6 @@ var CordovaAppUpdater =
       function (err) {
         throw err;
       });
-
-      localStorage['manifest'] = JSON.stringify(remote.Manifest);
-      localStorage['manifest.digest'] = JSON.stringify(remote.ManifestDigest);
-
-      localStorage['updateStage'] = 1;
-
-      showSplashScreen();
-
-      var jumpUrl = joinPath(fs.root.nativeURL, 'www', config.indexHtmlName);
-      var locationHref = location.href;
-      locationHref = locationHref.substring(0, locationHref.lastIndexOf("#"));
-      console.log('CordovaAppLoader:', 'jumpUrl=', jumpUrl, 'location.href=', locationHref);
-      if (locationHref == jumpUrl) {
-        location.reload();
-      } else {
-        location.href = jumpUrl;
-      }
     },
 
     switchToUpdatedVersion: function () {
