@@ -7,7 +7,8 @@ cordova-app-updater
 1. Update any assets (js/css/images/etc.), synchronize your app with its latest version on the server with ease. (Don't have to resubmit it to Apple Store!)
 2. Efficient: Only takes less than 150B to check whether an update is available
 3. Intelligent: Able to calculate the size of the update, show the download progress, notify when the update is done successfully.
-4. User-friendly: uses `splashscreen` to hide page reload from users.
+4. Safe: downloads to temp directory first, then merges temp and www. Will not break the app.
+5. User-friendly: uses `splashscreen` to hide page reload from users.
 
 ## Quick Start
 
@@ -73,7 +74,6 @@ cordova-app-updater
 5. [grunt](https://www.npmjs.com/package/grunt) [crypto](https://www.npmjs.com/package/crypto) [path](https://www.npmjs.com/package/path)
 6. [jQuery](https://github.com/jquery/jquery)
 7. [bluebird](https://github.com/petkaantonov/bluebird)
-8. [cordova-promise-fs](https://github.com/markmarijnissen/cordova-promise-fs)
 
 ## Demo
 
@@ -119,13 +119,11 @@ Checks the server-side version for update, calculates list of changed files and 
 Downloads the update to the cached folder, and informs of the progress with `CordovaAppUpdater.onProgress` callback.
 
 
-###CordovaAppUpdater.apply(applyOnNextLaunch);
+###CordovaAppUpdater.apply();
 
 **this function should be called after `'CordovaAppUpdater.download()'`**
 
 Apply the update (reloads the page).
-
-`applyOnNextLaunch` defaults to `false`, when set to true, there will be no page reload and the update will be applied the next time the user launches the app.
 
 ## Callbacks
 
