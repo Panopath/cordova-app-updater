@@ -148,3 +148,50 @@ Copy `plugins/cordova-plugin-file/src/android/build-extras.gradle` to `platforms
 https://github.com/apache/cordova-plugin-file#slow-recursive-operations-for-android_asset
 
 run `CordovaAppUpdater.switchToUpdatedVersion()` the moment `'deviceReady'` is received
+
+## Caution
+Do not put any hidden files/directories (files/directories starting with ```.```) in your ```/www``` directory. It may result in weird FileError (error code 1 - File Not Found).
+
+## iCloud backup
+Before uploading to app store for review, you should disable iCloud auto sync.
+Modify ```AppDelegate.m```, Find 
+
+	/** If you need to do any extra app-specific initialization, you can do it here
+     *  -jm
+     **/
+     
+Add the following code:
+
+	
+    NSString* doc = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    NSString* lib = [NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+    
+    float version = [[[UIDevice currentDevice] systemVersion] floatValue];
+    
+    if (version < 5.1)
+    {
+        u_int8_t b = 1;
+        setxattr([doc fileSystemRepresentation], "com.apple.MobileBackup", &b, 1, 0, 0);
+        setxattr([lib fileSystemRepresentation], "com.apple.MobileBackup", &b, 1, 0, 0);
+    }
+    else
+    {
+        NSError *error = nil;
+        
+        NSURL* url = [NSURL fileURLWithPath:doc];
+        BOOL success=[url setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error];
+        if(!success){
+            NSLog(@"Error excluding %@ from backup %@", [url lastPathComponent], error);
+        }else{
+            NSLog(@"successful");
+        }
+        
+        url = [NSURL fileURLWithPath:lib];
+        success=[url setResourceValue: [NSNumber numberWithBool: YES] forKey: NSURLIsExcludedFromBackupKey error: &error];
+        if(!success){
+            NSLog(@"Error excluding %@ from backup %@", [url lastPathComponent], error);
+        }else{
+            NSLog(@"successful");
+        }
+    }
+    
