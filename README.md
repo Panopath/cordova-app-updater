@@ -195,3 +195,7 @@ Add the following code:
         }
     }
     
+
+Also, add
+
+    #include <sys/xattr.h>
