@@ -125,6 +125,8 @@ var CordovaAppUpdater =
     fileTransfer.onprogress = function (ProgressEvent) {
       if (ProgressEvent.loaded <= last_loaded)
         return;
+      if (ProgressEvent.total == 0)
+        return;
       var increment = (ProgressEvent.loaded - last_loaded) / ProgressEvent.total * file.filesize;
       last_loaded = ProgressEvent.loaded;
       totalDownloaded += increment;
