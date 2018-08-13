@@ -90,7 +90,7 @@ cordova run android
 
 ## Methods
 
-###CordovaAppUpdater.switchToUpdatedVersion();
+### CordovaAppUpdater.switchToUpdatedVersion();
 
 Loads the newest, cached version of the app.
 
@@ -98,28 +98,28 @@ Loads the newest, cached version of the app.
 
 Disable it in dev environment, or you will not be able to the modifications in real-time (You will have to upload changes to the server and update the app to see modifications, you wouldn't want the extra trouble, would you).
 
-###CordovaAppUpdater.init();
+### CordovaAppUpdater.init();
 
 **this function should be called after `'deviceready'`**
 
 Loads local manifest, prepares the file system, on first run, it also copies the bundled files to the cached directory.
 
 
-###CordovaAppUpdater.check();
+### CordovaAppUpdater.check();
 
 **this function should be called after `'CordovaAppUpdater.init()'`**
 
 Checks the server-side version for update, calculates list of changed files and the size of the update.
 
 
-###CordovaAppUpdater.download();
+### CordovaAppUpdater.download();
 
 **this function should be called after `'CordovaAppUpdater.check()'`**
 
 Downloads the update to the cached folder, and informs of the progress with `CordovaAppUpdater.onProgress` callback.
 
 
-###CordovaAppUpdater.apply();
+### CordovaAppUpdater.apply();
 
 **this function should be called after `'CordovaAppUpdater.download()'`**
 
@@ -127,9 +127,9 @@ Apply the update (reloads the page).
 
 ## Callbacks
 
-###CordovaAppUpdater.updateSuccessful()
+### CordovaAppUpdater.updateSuccessful()
 No parameters, you can use this callback to display a notification to the user.
-###CordovaAppUpdater.onProgress(totalDownloaded, totalSize)
+### CordovaAppUpdater.onProgress(totalDownloaded, totalSize)
 After invoking `CordovaAppUpdater.download()`, this callback will inform you of the download progress.
 
 ## Rollback
